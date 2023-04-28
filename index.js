@@ -9,16 +9,39 @@ const T = new Twit({
   access_token_secret: process.env.ACCESS_TOKEN_SECRET
 });
 
-// start stream and track tweets
-const stream = T.stream('statuses/filter', { track: '#KarimBenzema', track: '#Benzema', track: '#KB9'});
+const search = { q: ['#KarimBenzema', '#Benzema', '#KB9', '#Nueve'], count: 20, result_type: 'recent' };
 
-function responseCallback(err, data, response) {
-  console.log(err);
+// start stream and track tweets
+function retweetLatest() {
+  try {
+
+    T.get('search/tweets', search, (error, data) => {
+      if (error) {
+        console.log(error.message);
+      } else {
+
+        const id = data.statuses[0].id_str;
+        T.post(`statuses/retweet/${id}`, (error, response) => {
+
+          if (error) {
+            console.log(error.message);
+          } else {
+            console.log('Success');
+          }
+
+        });
+      }
+    });
+
+  } catch(e) {
+    throw new Error(e)
+  }
 };
 
-stream.on('tweet', tweet => {
-  // retweet
-  T.post('statuses/retweet/:id', { id: tweet.id_str }, responseCallback);
-  // like
-  T.post('favorites/create', { id: tweet.id_str }, responseCallback);
-});
+retweetLatest();
+
+
+//Retweets interval
+setInterval(retweetLatest, 1000 * 60 * 10);
+
+
